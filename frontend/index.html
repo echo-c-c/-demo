@@ -1,0 +1,2858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时光对话者 - TimeTalker</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* 浅色主题变量 */
+            --bg-primary: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-secondary: rgba(255, 255, 255, 0.95);
+            --bg-tertiary: rgba(255, 255, 255, 0.8);
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --text-muted: #95a5a6;
+            --border-color: #e8f4f8;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --accent-color: #3498db;
+            --accent-hover: #2980b9;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --error-color: #e74c3c;
+            --card-bg: rgba(255, 255, 255, 0.6);
+            --input-bg: rgba(255, 255, 255, 0.8);
+        }
+
+        [data-theme="dark"] {
+            /* 深色主题变量 */
+            --bg-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --bg-secondary: rgba(30, 30, 46, 0.95);
+            --bg-tertiary: rgba(30, 30, 46, 0.8);
+            --text-primary: #e8f4f8;
+            --text-secondary: #b0b3b8;
+            --text-muted: #8a8d93;
+            --border-color: #3a3a4e;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --accent-color: #4a9eff;
+            --accent-hover: #357abd;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --error-color: #e67e22;
+            --card-bg: rgba(30, 30, 46, 0.6);
+            --input-bg: rgba(30, 30, 46, 0.8);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        /* 顶部导航栏样式 */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 1000;
+            box-shadow: 0 2px 20px var(--shadow);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            font-size: 2rem;
+            animation: pulse 2s infinite;
+        }
+
+        .brand-text h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .brand-text span {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            position: relative;
+            width: 45px;
+            height: 45px;
+            border: none;
+            border-radius: 12px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--error-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            width: 250px;
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px var(--shadow);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            animation: dropdownFadeIn 0.3s ease-out;
+        }
+
+        .user-dropdown .user-info {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-dropdown .user-info h4 {
+            margin: 0 0 5px 0;
+            color: var(--text-primary);
+        }
+
+        .user-dropdown .user-info p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .dropdown-actions {
+            padding: 10px 0;
+        }
+
+        .dropdown-actions button {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .dropdown-actions button:hover {
+            background: var(--card-bg);
+        }
+
+        .dropdown-actions button:last-child {
+            color: var(--error-color);
+        }
+
+        .dropdown-actions button:last-child:hover {
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 主布局样式 */
+        .main-layout {
+            margin-top: 70px;
+            min-height: calc(100vh - 70px);
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px var(--shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            min-height: 600px;
+        }
+
+        .auth-container {
+            max-width: 420px;
+            margin: 50px auto;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px var(--shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .auth-form h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .auth-form input {
+            padding: 15px 20px;
+            border: 2px solid #e8f4f8;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            color: #2c3e50;
+        }
+
+        .auth-form input:focus {
+            border-color: #3498db;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .auth-form .btn {
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-form .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .auth-form .btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #1f5f8b 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .auth-form .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+        }
+
+        .auth-form .btn-secondary:hover {
+            background: linear-gradient(135deg, #7f8c8d 0%, #6c7b7d 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(127, 140, 141, 0.3);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .auth-switch a {
+            color: #3498db;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .auth-switch a:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-details h4 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .user-details p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+        }
+
+        .logout-btn:hover {
+            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e8f4f8;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            color: #2c3e50;
+        }
+
+        .search-box input:focus {
+            border-color: #3498db;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .character-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .no-characters {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            margin: 10px;
+        }
+
+        .character-card {
+            display: flex;
+            align-items: center;
+            padding: 18px;
+            margin-bottom: 12px;
+            border: 2px solid transparent;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(5px);
+        }
+
+        .character-card:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+        }
+
+        .character-card.active {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .character-avatar {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            margin-right: 18px;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .character-info h3 {
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .character-info p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e8f4f8;
+        }
+
+        .chat-avatar {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            margin-right: 18px;
+            border: 3px solid rgba(52, 152, 219, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-info h2 {
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .chat-info p {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .chat-messages {
+            flex: 1;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #e8f4f8;
+            border-radius: 15px;
+            background: rgba(248, 250, 252, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .message.assistant .message-content {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e8f4f8;
+            color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .message-time {
+            font-size: 0.8rem;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e8f4f8;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            color: #2c3e50;
+        }
+
+        .chat-input input:focus {
+            border-color: #3498db;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #1f5f8b 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #7f8c8d 0%, #6c7b7d 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(127, 140, 141, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .skills-section {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px solid #e8f4f8;
+        }
+
+        .skills-title {
+            font-size: 1.3rem;
+            margin-bottom: 18px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .skill-btn {
+            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid #e8f4f8;
+            border-radius: 25px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            color: #2c3e50;
+        }
+
+        .skill-btn:hover {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border-color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e8f4f8;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .header p {
+                font-size: 1.1rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .sidebar {
+                padding: 20px;
+            }
+            
+            .chat-container {
+                padding: 20px;
+            }
+            
+            .skills-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .auth-container {
+                margin: 20px auto;
+                padding: 30px 20px;
+            }
+            
+            .character-card {
+                padding: 15px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+                padding: 12px 16px;
+            }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        /* 自定义模态框样式 */
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .modal-body {
+            margin-bottom: 25px;
+        }
+
+        .modal-label {
+            display: block;
+            font-size: 1rem;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e8f4f8;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            color: #2c3e50;
+            box-sizing: border-box;
+        }
+
+        .modal-input:focus {
+            border-color: #3498db;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .modal-btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #1f5f8b 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .modal-btn-secondary {
+            background: rgba(255, 255, 255, 0.8);
+            color: #7f8c8d;
+            border: 2px solid #e8f4f8;
+        }
+
+        .modal-btn-secondary:hover {
+            background: rgba(248, 250, 252, 0.9);
+            border-color: #d5dbdb;
+            transform: translateY(-2px);
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* 用户操作按钮样式 */
+        .user-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .action-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background: rgba(52, 152, 219, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* 收藏按钮样式 */
+        .favorite-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            color: #f39c12;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .favorite-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+        }
+
+        .favorite-btn.favorited {
+            background: #f39c12;
+            color: white;
+        }
+
+        /* 面板样式 */
+        .history-panel, .favorites-panel, .settings-panel, .notification-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid var(--border-color);
+            box-shadow: -8px 0 32px var(--shadow);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .notification-panel {
+            top: 70px;
+            height: calc(100vh - 70px);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 2px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+
+        .panel-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+        }
+
+        .close-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(231, 76, 60, 0.2);
+            transform: scale(1.1);
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* 历史记录样式 */
+        .search-history {
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e8f4f8;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .history-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #e8f4f8;
+        }
+
+        .history-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .history-character {
+            font-weight: 600;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .history-content {
+            color: #2c3e50;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 5px;
+        }
+
+        .history-time {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .character-history-group {
+            padding: 15px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            border: 1px solid #e8f4f8;
+        }
+
+        .character-history-group h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .load-history-btn, .clear-history-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .load-history-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+
+        .clear-history-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .message-count {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        /* 收藏面板样式 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+
+        .favorite-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #e8f4f8;
+        }
+
+        .favorite-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .favorite-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            border: 2px solid rgba(52, 152, 219, 0.2);
+        }
+
+        .favorite-info {
+            flex: 1;
+        }
+
+        .favorite-info h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .favorite-info p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+
+        .remove-favorite-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(243, 156, 18, 0.1);
+            color: #f39c12;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .remove-favorite-btn:hover {
+            background: rgba(243, 156, 18, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* 设置面板样式 */
+        .settings-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e8f4f8;
+        }
+
+        .settings-section:last-child {
+            border-bottom: none;
+        }
+
+        .settings-section h4 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+
+        .setting-item {
+            margin-bottom: 15px;
+        }
+
+        .setting-item label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .setting-item select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e8f4f8;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            color: #2c3e50;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .setting-item select:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .setting-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .export-btn, .clear-all-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+        }
+
+        .clear-all-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .export-btn:hover, .clear-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px var(--shadow);
+        }
+
+        /* 通知样式 */
+        .notification-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .notification-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .notification-item:hover {
+            background: var(--bg-tertiary);
+            transform: translateY(-2px);
+        }
+
+        .notification-item.unread {
+            border-left: 4px solid var(--accent-color);
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-content h4 {
+            margin: 0 0 5px 0;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .notification-content p {
+            margin: 0 0 5px 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .notification-time {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* 语音通话悬浮按钮 */
+        .voice-call-btn {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            color: #fff;
+            font-size: 22px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+        .voice-call-btn.recording {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            box-shadow: 0 10px 24px rgba(231,76,60,0.35);
+            animation: pulse 1.2s infinite;
+        }
+        .voice-call-btn:hover { transform: translateY(-2px); }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .history-panel, .favorites-panel, .settings-panel {
+                width: 100%;
+            }
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+        <div id="app">
+            <!-- 顶部导航栏 -->
+            <nav class="top-nav">
+                <div class="nav-brand">
+                    <div class="logo">⏰</div>
+                    <div class="brand-text">
+                        <h1>时光对话者</h1>
+                        <span>TimeTalker</span>
+                    </div>
+                </div>
+                <div class="nav-actions" v-if="isLoggedIn">
+                    <button class="nav-btn" @click="toggleNotificationPanel" title="通知">
+                        🔔
+                        <span v-if="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
+                    </button>
+                    <button class="nav-btn" @click="showSettings" title="设置">⚙️</button>
+                    <div class="user-menu">
+                        <div class="user-avatar" @click="toggleUserMenu">
+                            {{ currentUser.username.charAt(0).toUpperCase() }}
+                        </div>
+                        <div v-if="showUserMenu" class="user-dropdown">
+                            <div class="user-info">
+                                <h4>{{ currentUser.username }}</h4>
+                                <p>{{ currentUser.email }}</p>
+                            </div>
+                            <div class="dropdown-actions">
+                                <button @click="showProfile">个人资料</button>
+                                <button @click="logout">退出登录</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- 主要内容区域 -->
+            <div class="main-layout">
+
+                <!-- 登录/注册界面 -->
+                <div v-if="!isLoggedIn" class="auth-container fade-in">
+                <div v-if="authMode === 'login'" class="auth-form">
+                    <h2>🔐 登录时光对话者</h2>
+                    <input 
+                        type="text" 
+                        v-model="loginForm.username" 
+                        placeholder="用户名或邮箱"
+                    >
+                    <input 
+                        type="password" 
+                        v-model="loginForm.password" 
+                        placeholder="密码"
+                    >
+                    <button 
+                        class="btn btn-primary" 
+                        @click="login"
+                        :disabled="isLoading"
+                    >
+                        {{ isLoading ? '登录中...' : '登录' }}
+                    </button>
+                    <div class="auth-switch">
+                        <a @click="authMode = 'register'">还没有账户？立即注册</a>
+                    </div>
+                </div>
+
+                <div v-if="authMode === 'register'" class="auth-form">
+                    <h2>✨ 加入时光对话者</h2>
+                    <input 
+                        type="text" 
+                        v-model="registerForm.username" 
+                        placeholder="用户名"
+                    >
+                    <input 
+                        type="email" 
+                        v-model="registerForm.email" 
+                        placeholder="邮箱"
+                    >
+                    <input 
+                        type="password" 
+                        v-model="registerForm.password" 
+                        placeholder="密码"
+                    >
+                    <button 
+                        class="btn btn-primary" 
+                        @click="register"
+                        :disabled="isLoading"
+                    >
+                        {{ isLoading ? '注册中...' : '注册' }}
+                    </button>
+                    <div class="auth-switch">
+                        <a @click="authMode = 'login'">已有账户？立即登录</a>
+                    </div>
+                </div>
+            </div>
+
+                <!-- 主应用界面 -->
+                <div v-if="isLoggedIn" class="main-content fade-in">
+                <!-- 侧边栏 - 角色列表 -->
+                <div class="sidebar slide-in">
+                    <!-- 用户信息 -->
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            {{ currentUser.username.charAt(0).toUpperCase() }}
+                        </div>
+                        <div class="user-details">
+                            <h4>{{ currentUser.username }}</h4>
+                            <p>{{ currentUser.email }}</p>
+                        </div>
+                        <div class="user-actions">
+                            <button class="action-btn" @click="showChatHistory" title="聊天历史">
+                                📜
+                            </button>
+                            <button class="action-btn" @click="showFavorites" title="收藏角色">
+                                ⭐
+                            </button>
+                            <button class="action-btn" @click="showSettings" title="设置">
+                                ⚙️
+                            </button>
+                            <button class="logout-btn" @click="logout">退出</button>
+                        </div>
+                    </div>
+                    <div class="search-box">
+                        <input 
+                            type="text" 
+                            v-model="searchQuery" 
+                            @input="searchCharacters"
+                            placeholder="搜索角色..."
+                        >
+                    </div>
+                    
+                    <div class="character-list">
+                        <div v-if="filteredCharacters.length === 0" class="no-characters">
+                            <p>暂无角色数据</p>
+                            <p>角色总数: {{ characters.length }}</p>
+                        </div>
+                        <div 
+                            v-for="character in filteredCharacters" 
+                            :key="character.id"
+                            class="character-card"
+                            :class="{ active: selectedCharacter && selectedCharacter.id === character.id }"
+                            @click="selectCharacter(character)"
+                        >
+                            <img :src="character.avatar" :alt="character.name" class="character-avatar">
+                            <div class="character-info">
+                                <h3>{{ character.name }}</h3>
+                                <p>{{ character.description }}</p>
+                            </div>
+                            <button 
+                                class="favorite-btn"
+                                :class="{ favorited: character.is_favorited }"
+                                @click.stop="toggleFavorite(character)"
+                                :title="character.is_favorited ? '取消收藏' : '添加收藏'"
+                            >
+                                {{ character.is_favorited ? '⭐' : '☆' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 聊天区域 -->
+                <div class="chat-container fade-in">
+                    <div v-if="selectedCharacter" class="chat-header">
+                        <img :src="selectedCharacter.avatar" :alt="selectedCharacter.name" class="chat-avatar">
+                        <div class="chat-info">
+                            <h2>{{ selectedCharacter.name }}</h2>
+                            <p>{{ selectedCharacter.description }}</p>
+                        </div>
+                    </div>
+
+                    <div v-if="selectedCharacter" class="chat-messages" ref="chatMessages">
+                        <div 
+                            v-for="message in messages" 
+                            :key="message.id"
+                            class="message"
+                            :class="message.role"
+                        >
+                            <div class="message-content">
+                                {{ message.content }}
+                                <div class="message-time">{{ formatTime(message.timestamp) }}</div>
+                            </div>
+                        </div>
+                        
+                        <div v-if="isLoading" class="message assistant">
+                            <div class="message-content">
+                                <div class="loading"></div>
+                                正在思考中...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="selectedCharacter" class="chat-input">
+                        <input 
+                            type="text" 
+                            v-model="inputMessage"
+                            @keyup.enter="sendMessage"
+                            placeholder="输入消息..."
+                            :disabled="isLoading"
+                        >
+                        <button 
+                            class="btn btn-primary"
+                            @click="sendMessage"
+                            :disabled="isLoading || !inputMessage.trim()"
+                        >
+                            发送
+                        </button>
+                        <button 
+                            class="btn btn-secondary"
+                            @click="toggleVoiceMode"
+                            :disabled="isLoading"
+                        >
+                            {{ isVoiceMode ? '🎤 语音模式' : '⌨️ 文本模式' }}
+                        </button>
+                    </div>
+
+                    <!-- 角色技能区域 -->
+                    <div v-if="selectedCharacter" class="skills-section">
+                        <h3 class="skills-title">角色技能</h3>
+                        <div class="skills-grid">
+                        <div 
+                            v-for="skill in selectedCharacter.skills" 
+                            :key="skill"
+                            class="skill-btn"
+                            @click="useSkill(skill)"
+                            :title="getSkillDescription(skill)"
+                        >
+                            {{ skill }}
+                        </div>
+                        </div>
+                    </div>
+
+                    <div v-if="!selectedCharacter" class="no-character">
+                        <h2>请选择一个角色开始对话</h2>
+                        <p>从左侧列表中选择你感兴趣的角色，开始一段有趣的对话吧！</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 聊天历史记录面板 -->
+            <div v-if="showHistoryPanel" class="history-panel">
+                <div class="panel-header">
+                    <h3>📜 聊天历史记录</h3>
+                    <button class="close-btn" @click="showHistoryPanel = false">×</button>
+                </div>
+                <div class="panel-content">
+                    <div class="search-history">
+                        <input 
+                            type="text" 
+                            v-model="historySearchQuery" 
+                            @input="searchHistory"
+                            placeholder="搜索聊天记录..."
+                            class="search-input"
+                        >
+                    </div>
+                    <div class="history-list">
+                        <div v-if="historySearchResults.length > 0" class="search-results">
+                            <h4>搜索结果</h4>
+                            <div 
+                                v-for="result in historySearchResults" 
+                                :key="result.timestamp"
+                                class="history-item"
+                                @click="loadHistoryMessage(result)"
+                            >
+                                <div class="history-character">{{ getCharacterName(result.character_id) }}</div>
+                                <div class="history-content">{{ result.content.substring(0, 100) }}...</div>
+                                <div class="history-time">{{ formatTime(result.timestamp) }}</div>
+                            </div>
+                        </div>
+                        <div v-else class="character-history">
+                            <div 
+                                v-for="(messages, characterId) in chatHistory" 
+                                :key="characterId"
+                                class="character-history-group"
+                            >
+                                <h4>{{ getCharacterName(characterId) }}</h4>
+                                <div class="history-actions">
+                                    <button @click="loadCharacterHistory(characterId)" class="load-history-btn">
+                                        加载历史
+                                    </button>
+                                    <button @click="clearCharacterHistory(characterId)" class="clear-history-btn">
+                                        清空记录
+                                    </button>
+                                </div>
+                                <div class="message-count">{{ messages.length }} 条消息</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 收藏角色面板 -->
+            <div v-if="showFavoritesPanel" class="favorites-panel">
+                <div class="panel-header">
+                    <h3>⭐ 收藏的角色</h3>
+                    <button class="close-btn" @click="showFavoritesPanel = false">×</button>
+                </div>
+                <div class="panel-content">
+                    <div v-if="favoriteCharacters.length === 0" class="empty-state">
+                        <p>还没有收藏任何角色</p>
+                        <p>点击角色卡片上的星号来收藏喜欢的角色</p>
+                    </div>
+                    <div v-else class="favorites-list">
+                        <div 
+                            v-for="character in favoriteCharacters" 
+                            :key="character.id"
+                            class="favorite-item"
+                            @click="selectCharacter(character); showFavoritesPanel = false"
+                        >
+                            <img :src="character.avatar" :alt="character.name" class="favorite-avatar">
+                            <div class="favorite-info">
+                                <h4>{{ character.name }}</h4>
+                                <p>{{ character.description }}</p>
+                            </div>
+                            <button 
+                                class="remove-favorite-btn"
+                                @click.stop="toggleFavorite(character)"
+                                title="取消收藏"
+                            >
+                                ⭐
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 设置面板 -->
+            <div v-if="showSettingsPanel" class="settings-panel">
+                <div class="panel-header">
+                    <h3>⚙️ 设置</h3>
+                    <button class="close-btn" @click="showSettingsPanel = false">×</button>
+                </div>
+                <div class="panel-content">
+                    <div class="settings-section">
+                        <h4>界面设置</h4>
+                        <div class="setting-item">
+                            <label>主题模式</label>
+                            <select v-model="userSettings.theme" @change="saveSettings">
+                                <option value="light">浅色模式</option>
+                                <option value="dark">深色模式</option>
+                                <option value="auto">跟随系统</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>消息显示数量</label>
+                            <select v-model="userSettings.messageLimit" @change="saveSettings">
+                                <option value="20">20条</option>
+                                <option value="50">50条</option>
+                                <option value="100">100条</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h4>聊天设置</h4>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" v-model="userSettings.autoScroll" @change="saveSettings">
+                                自动滚动到最新消息
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" v-model="userSettings.showTimestamps" @change="saveSettings">
+                                显示消息时间戳
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h4>数据管理</h4>
+                        <div class="setting-item">
+                            <button @click="exportChatHistory" class="export-btn">导出聊天记录</button>
+                        </div>
+                        <div class="setting-item">
+                            <button @click="clearAllHistory" class="clear-all-btn">清空所有聊天记录</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 通知面板 -->
+                <div v-if="showNotificationPanel" class="notification-panel">
+                <div class="panel-header">
+                    <h3>🔔 通知</h3>
+                    <button class="close-btn" @click="showNotificationPanel = false">×</button>
+                </div>
+                <div class="panel-content">
+                    <div v-if="notifications.length === 0" class="empty-state">
+                        <p>暂无通知</p>
+                    </div>
+                    <div v-else class="notification-list">
+                        <div 
+                            v-for="notification in notifications" 
+                            :key="notification.id"
+                            class="notification-item"
+                            :class="{ unread: !notification.read }"
+                        >
+                            <div class="notification-icon">{{ notification.icon }}</div>
+                            <div class="notification-content">
+                                <h4>{{ notification.title }}</h4>
+                                <p>{{ notification.message }}</p>
+                                <span class="notification-time">{{ formatTime(notification.timestamp) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 语音通话悬浮按钮：登录且已选择角色时显示 -->
+    <button 
+        v-if="isLoggedIn && selectedCharacter"
+        :class="['voice-call-btn', { recording: isRecording }]"
+        @click="toggleRecording"
+        title="语音通话"
+    >
+        {{ isRecording ? '■' : '🎤' }}
+    </button>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    // 认证相关
+                    isLoggedIn: false,
+                    authMode: 'login', // 'login' 或 'register'
+                    currentUser: null,
+                    authToken: null,
+                    
+                    // 登录表单
+                    loginForm: {
+                        username: '',
+                        password: ''
+                    },
+                    
+                    // 注册表单
+                    registerForm: {
+                        username: '',
+                        email: '',
+                        password: ''
+                    },
+                    
+                        // 聊天相关
+                        characters: [],
+                        filteredCharacters: [],
+                        selectedCharacter: null,
+                        messages: [],
+                        inputMessage: '',
+                        searchQuery: '',
+                        isLoading: false,
+                        isVoiceMode: false,
+                        websocket: null,
+                        
+                        // 语音通话相关
+                        isVoiceCalling: false,
+                        isRecording: false,
+                        mediaRecorder: null,
+                        audioChunks: [],
+                        currentAudio: null,
+
+                        // 新功能相关
+                        showHistoryPanel: false,
+                        showFavoritesPanel: false,
+                        showSettingsPanel: false,
+                        showUserMenu: false,
+                        showNotificationPanel: false,
+                        unreadCount: 0,
+                        chatHistory: {},
+                        historySearchQuery: '',
+                        historySearchResults: [],
+                        favoriteCharacters: [],
+                        userSettings: {
+                            theme: 'light',
+                            messageLimit: '50',
+                            autoScroll: true,
+                            showTimestamps: true
+                        },
+                        notifications: []
+                }
+            },
+            methods: {
+                // 认证相关方法
+                checkAuthStatus() {
+                    const token = localStorage.getItem('authToken');
+                    const user = localStorage.getItem('currentUser');
+                    
+                    if (token && user) {
+                        this.authToken = token;
+                        this.currentUser = JSON.parse(user);
+                        this.isLoggedIn = true;
+                        this.setupAxiosAuth();
+                    }
+                },
+                
+                setupAxiosAuth() {
+                    if (this.authToken) {
+                        axios.defaults.headers.common['Authorization'] = `Bearer ${this.authToken}`;
+                    }
+                },
+                
+                async login() {
+                    if (!this.loginForm.username || !this.loginForm.password) {
+                        this.showError('请填写用户名和密码');
+                        return;
+                    }
+                    
+                    this.isLoading = true;
+                    try {
+                        const response = await axios.post('/api/auth/login', this.loginForm);
+                        
+                        if (response.data.success) {
+                            this.authToken = response.data.token;
+                            this.currentUser = response.data.user;
+                            this.isLoggedIn = true;
+                            
+                            // 保存到本地存储
+                            localStorage.setItem('authToken', this.authToken);
+                            localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+                            
+                            // 设置axios认证头
+                            this.setupAxiosAuth();
+                            
+                            this.showSuccess('登录成功！');
+                            this.loginForm = { username: '', password: '' };
+                        }
+                    } catch (error) {
+                        this.showError(error.response?.data?.detail || '登录失败');
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+                
+                async register() {
+                    if (!this.registerForm.username || !this.registerForm.email || !this.registerForm.password) {
+                        this.showError('请填写所有字段');
+                        return;
+                    }
+                    
+                    this.isLoading = true;
+                    try {
+                        const response = await axios.post('/api/auth/register', this.registerForm);
+                        
+                        if (response.data.success) {
+                            this.showSuccess('注册成功！请登录');
+                            this.authMode = 'login';
+                            this.registerForm = { username: '', email: '', password: '' };
+                        }
+                    } catch (error) {
+                        this.showError(error.response?.data?.detail || '注册失败');
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+                
+                logout() {
+                    this.isLoggedIn = false;
+                    this.currentUser = null;
+                    this.authToken = null;
+                    this.selectedCharacter = null;
+                    this.messages = [];
+                    
+                    // 清除本地存储
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('currentUser');
+                    
+                    // 清除axios认证头
+                    delete axios.defaults.headers.common['Authorization'];
+                    
+                    // 关闭WebSocket连接
+                    if (this.websocket) {
+                        this.websocket.close();
+                        this.websocket = null;
+                    }
+                    
+                    this.showSuccess('已退出登录');
+                },
+                
+                async loadCharacters() {
+                    try {
+                        console.log('正在请求 /api/characters...');
+                        const response = await axios.get('/api/characters');
+                        console.log('API响应状态:', response.status);
+                        console.log('角色数据:', response.data);
+                        this.characters = response.data;
+                        this.filteredCharacters = response.data;
+                        console.log('角色数量:', this.characters.length);
+                        console.log('角色列表已更新');
+                    } catch (error) {
+                        console.error('加载角色失败:', error);
+                        console.error('错误详情:', error.response);
+                        this.showError('加载角色失败，请刷新页面重试');
+                    }
+                },
+                
+                searchCharacters() {
+                    if (!this.searchQuery.trim()) {
+                        this.filteredCharacters = this.characters;
+                        return;
+                    }
+                    
+                    this.filteredCharacters = this.characters.filter(character => 
+                        character.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                        character.description.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                        character.category.toLowerCase().includes(this.searchQuery.toLowerCase())
+                    );
+                },
+                
+                selectCharacter(character) {
+                    this.selectedCharacter = character;
+                    this.messages = [];
+                    this.connectWebSocket();
+                },
+                
+                connectWebSocket() {
+                    if (this.websocket) {
+                        this.websocket.close();
+                    }
+                    
+                    this.websocket = new WebSocket(`ws://localhost:8000/ws/${this.selectedCharacter.id}`);
+                    
+                    this.websocket.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        this.handleWebSocketMessage(data);
+                    };
+                    
+                    this.websocket.onerror = (error) => {
+                        console.error('WebSocket错误:', error);
+                        this.showError('连接失败，请重试');
+                    };
+                },
+                
+                handleWebSocketMessage(data) {
+                    this.isLoading = false;
+                    
+                    if (data.type === 'text') {
+                        this.messages.push({
+                            id: Date.now(),
+                            role: 'assistant',
+                            content: data.content,
+                            timestamp: data.timestamp
+                        });
+                    } else if (data.type === 'voice_response') {
+                        // 语音通话回复
+                        this.messages.push({
+                            id: Date.now(),
+                            role: 'user',
+                            content: data.user_text,
+                            timestamp: data.timestamp,
+                            isVoice: true
+                        });
+                        this.messages.push({
+                            id: Date.now() + 1,
+                            role: 'assistant',
+                            content: data.response_text,
+                            timestamp: data.timestamp,
+                            isVoice: true,
+                            audio: data.response_audio
+                        });
+                        
+                        // 播放AI回复的语音
+                        if (data.response_audio) {
+                            this.playAudio(data.response_audio);
+                        }
+                    } else if (data.type === 'error') {
+                        this.showError(data.content);
+                    }
+                    
+                    this.scrollToBottom();
+                },
+                
+                async sendMessage() {
+                    if (!this.inputMessage.trim() || this.isLoading) return;
+                    
+                    const message = this.inputMessage.trim();
+                    this.inputMessage = '';
+                    this.isLoading = true;
+                    
+                    // 添加用户消息
+                    this.messages.push({
+                        id: Date.now(),
+                        role: 'user',
+                        content: message,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    this.scrollToBottom();
+                    
+                    // 发送消息
+                    if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+                        this.websocket.send(JSON.stringify({
+                            type: 'text',
+                            content: message
+                        }));
+                    } else {
+                        // 备用HTTP请求
+                        try {
+                            const response = await axios.post('/api/chat/text', {
+                                character_id: this.selectedCharacter.id,
+                                message: message
+                            });
+                            
+                            this.isLoading = false;
+                            this.messages.push({
+                                id: Date.now(),
+                                role: 'assistant',
+                                content: response.data.response,
+                                timestamp: new Date().toISOString()
+                            });
+                            this.scrollToBottom();
+                        } catch (error) {
+                            this.isLoading = false;
+                            this.showError('发送消息失败，请重试');
+                        }
+                    }
+                },
+                
+                async useSkill(skillName) {
+                    if (this.isLoading) return;
+                    
+                    this.isLoading = true;
+                    
+                    try {
+                        let params = {};
+                        let promptText = '';
+                        
+                        // 根据技能类型收集参数
+                        if (skillName === '魔法知识') {
+                            promptText = '请输入你想了解的魔法知识问题:';
+                            const question = await this.showCustomPrompt(promptText);
+                            if (!question) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.question = question;
+                        } else if (skillName === '故事创作') {
+                            promptText = '请输入故事主题:';
+                            const topic = await this.showCustomPrompt(promptText);
+                            if (!topic) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.topic = topic;
+                        } else if (skillName === '人生建议') {
+                            promptText = '请描述你遇到的问题:';
+                            const problem = await this.showCustomPrompt(promptText);
+                            if (!problem) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.problem = problem;
+                        } else if (skillName.includes('问答') || skillName === '科学解释') {
+                            promptText = '请输入你的问题:';
+                            const question = await this.showCustomPrompt(promptText);
+                            if (!question) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.question = question;
+                        } else if (skillName === '哲学思辨') {
+                            promptText = '请输入要思辨的话题:';
+                            const topic = await this.showCustomPrompt(promptText);
+                            if (!topic) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.topic = topic;
+                        } else if (skillName === '创新思维') {
+                            promptText = '请描述面临的挑战:';
+                            const challenge = await this.showCustomPrompt(promptText);
+                            if (!challenge) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.challenge = challenge;
+                        } else if (skillName === '情感分析') {
+                            promptText = '请描述情感状况:';
+                            const situation = await this.showCustomPrompt(promptText);
+                            if (!situation) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.situation = situation;
+                        } else if (skillName === '文学创作') {
+                            promptText = '请输入文学创作主题:';
+                            const topic = await this.showCustomPrompt(promptText);
+                            if (!topic) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.topic = topic;
+                        } else if (skillName === '语言艺术') {
+                            promptText = '请输入需要润色的文字:';
+                            const text = await this.showCustomPrompt(promptText);
+                            if (!text) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.text = text;
+                        } else if (skillName === '人生感悟') {
+                            promptText = '请分享一个经历或感受:';
+                            const experience = await this.showCustomPrompt(promptText);
+                            if (!experience) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.experience = experience;
+                        } else if (skillName === '艺术指导') {
+                            promptText = '请输入艺术类型（如绘画、雕塑等）:';
+                            const artType = await this.showCustomPrompt(promptText);
+                            if (!artType) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.art_type = artType;
+                        } else if (skillName === '创新设计') {
+                            promptText = '请描述设计挑战:';
+                            const designChallenge = await this.showCustomPrompt(promptText);
+                            if (!designChallenge) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.design_challenge = designChallenge;
+                        } else if (skillName === '观察分析') {
+                            promptText = '请描述你的观察:';
+                            const observation = await this.showCustomPrompt(promptText);
+                            if (!observation) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.observation = observation;
+                        } else if (skillName === '教育指导') {
+                            promptText = '请输入学科或学习主题:';
+                            const subject = await this.showCustomPrompt(promptText);
+                            if (!subject) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.subject = subject;
+                        } else if (skillName === '哲学思考') {
+                            promptText = '请输入哲学问题:';
+                            const philosophicalQuestion = await this.showCustomPrompt(promptText);
+                            if (!philosophicalQuestion) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.philosophical_question = philosophicalQuestion;
+                        } else if (skillName === '逻辑推理') {
+                            promptText = '请输入需要逻辑推理的问题:';
+                            const logicalProblem = await this.showCustomPrompt(promptText);
+                            if (!logicalProblem) {
+                                this.isLoading = false;
+                                return;
+                            }
+                            params.logical_problem = logicalProblem;
+                        } else {
+                            // 对于不需要额外参数的技能，直接使用默认参数
+                            params = {};
+                        }
+                        
+                        const response = await axios.post(
+                            `/api/characters/${this.selectedCharacter.id}/skills/${skillName}`,
+                            params
+                        );
+                        
+                        this.isLoading = false;
+                        
+                        if (response.data.error) {
+                            this.showError(response.data.error);
+                        } else {
+                            this.messages.push({
+                                id: Date.now(),
+                                role: 'assistant',
+                                content: `【${skillName}】\n\n${response.data.result}`,
+                                timestamp: new Date().toISOString()
+                            });
+                            this.scrollToBottom();
+                        }
+                    } catch (error) {
+                        this.isLoading = false;
+                        this.showError('使用技能失败，请重试');
+                    }
+                },
+                
+                toggleVoiceMode() {
+                    this.isVoiceMode = !this.isVoiceMode;
+                    if (this.isVoiceMode) {
+                        this.startVoiceRecording();
+                    } else {
+                        this.stopVoiceRecording();
+                    }
+                },
+                
+                startVoiceRecording() {
+                    // 这里应该实现语音录制功能
+                    // 由于浏览器限制，需要HTTPS环境
+                    alert('语音功能需要在HTTPS环境下使用，当前为演示模式');
+                },
+                
+                stopVoiceRecording() {
+                    // 停止语音录制
+                },
+                
+                playAudio(audioData) {
+                    try {
+                        const audio = new Audio(`data:audio/wav;base64,${audioData}`);
+                        audio.play();
+                    } catch (error) {
+                        console.error('播放音频失败:', error);
+                    }
+                },
+                
+                scrollToBottom() {
+                    this.$nextTick(() => {
+                        const chatMessages = this.$refs.chatMessages;
+                        if (chatMessages) {
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }
+                    });
+                },
+                
+                formatTime(timestamp) {
+                    return new Date(timestamp).toLocaleTimeString();
+                },
+                
+                showError(message) {
+                    // 简单的错误提示
+                    alert('❌ ' + message);
+                },
+                
+                showSuccess(message) {
+                    // 简单的成功提示
+                    alert('✅ ' + message);
+                },
+                
+                getSkillDescription(skill) {
+                    const descriptions = {
+                        '魔法知识': '询问魔法世界的知识和咒语',
+                        '故事创作': '创作精彩的故事',
+                        '人生建议': '获得人生指导和智慧',
+                        '问答解惑': '解答各种问题',
+                        '哲学思辨': '进行深度哲学讨论',
+                        '智慧建议': '获得哲学智慧指导',
+                        '深度问答': '苏格拉底式深度问答',
+                        '逻辑推理': '帮助理清思维逻辑',
+                        '科学解释': '解释科学现象和原理',
+                        '创新思维': '提供创新解决方案',
+                        '教育指导': '科学学习方法指导',
+                        '哲学思考': '科学哲学思考',
+                        '文学创作': '创作诗歌和文学作品',
+                        '情感分析': '分析人性情感',
+                        '语言艺术': '优美的语言表达',
+                        '人生感悟': '基于文学的人生智慧',
+                        '艺术指导': '绘画和艺术创作指导',
+                        '创新设计': '工程和发明设计',
+                        '观察分析': '敏锐的观察和分析'
+                    };
+                    return descriptions[skill] || '使用角色专属技能';
+                },
+                
+                showCustomPrompt(message) {
+                    return new Promise((resolve) => {
+                        // 创建模态框HTML
+                        const modalHTML = `
+                            <div class="custom-modal" id="customModal">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h3 class="modal-title">技能输入</h3>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label class="modal-label">${message}</label>
+                                        <input type="text" class="modal-input" id="modalInput" placeholder="请输入内容...">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="modal-btn modal-btn-secondary" id="modalCancel">取消</button>
+                                        <button class="modal-btn modal-btn-primary" id="modalConfirm">确定</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // 添加到页面
+                        document.body.insertAdjacentHTML('beforeend', modalHTML);
+                        
+                        const modal = document.getElementById('customModal');
+                        const input = document.getElementById('modalInput');
+                        const confirmBtn = document.getElementById('modalConfirm');
+                        const cancelBtn = document.getElementById('modalCancel');
+                        
+                        // 聚焦输入框
+                        input.focus();
+                        
+                        // 确认按钮事件
+                        const handleConfirm = () => {
+                            const value = input.value.trim();
+                            modal.remove();
+                            resolve(value);
+                        };
+                        
+                        // 取消按钮事件
+                        const handleCancel = () => {
+                            modal.remove();
+                            resolve(null);
+                        };
+                        
+                        // 绑定事件
+                        confirmBtn.addEventListener('click', handleConfirm);
+                        cancelBtn.addEventListener('click', handleCancel);
+                        
+                        // 回车键确认
+                        input.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') {
+                                handleConfirm();
+                            }
+                        });
+                        
+                        // ESC键取消
+                        document.addEventListener('keydown', (e) => {
+                            if (e.key === 'Escape') {
+                                handleCancel();
+                            }
+                        });
+                        
+                        // 点击背景关闭
+                        modal.addEventListener('click', (e) => {
+                            if (e.target === modal) {
+                                handleCancel();
+                            }
+                        });
+                    });
+                },
+
+                // 新功能方法
+                async showChatHistory() {
+                    this.showHistoryPanel = true;
+                    await this.loadChatHistory();
+                },
+
+                async showFavorites() {
+                    this.showFavoritesPanel = true;
+                    await this.loadFavoriteCharacters();
+                },
+
+                showSettings() {
+                    this.showSettingsPanel = true;
+                },
+
+                async loadChatHistory() {
+                    try {
+                        const response = await axios.get('/api/chat/history');
+                        this.chatHistory = response.data;
+                    } catch (error) {
+                        this.showError('加载聊天历史失败');
+                    }
+                },
+
+                async searchHistory() {
+                    if (!this.historySearchQuery.trim()) {
+                        this.historySearchResults = [];
+                        return;
+                    }
+
+                    try {
+                        const response = await axios.get(`/api/chat/search?query=${encodeURIComponent(this.historySearchQuery)}`);
+                        this.historySearchResults = response.data;
+                    } catch (error) {
+                        this.showError('搜索聊天记录失败');
+                    }
+                },
+
+                async loadCharacterHistory(characterId) {
+                    try {
+                        const response = await axios.get(`/api/chat/history/${characterId}`);
+                        const history = response.data;
+                        
+                        // 将历史记录添加到当前消息中
+                        this.messages = [...history, ...this.messages];
+                        this.scrollToBottom();
+                        
+                        // 选择对应的角色
+                        const character = this.characters.find(c => c.id === characterId);
+                        if (character) {
+                            this.selectedCharacter = character;
+                        }
+                        
+                        this.showHistoryPanel = false;
+                        this.showSuccess('历史记录已加载');
+                    } catch (error) {
+                        this.showError('加载角色历史记录失败');
+                    }
+                },
+
+                async clearCharacterHistory(characterId) {
+                    if (!confirm('确定要清空与这个角色的所有聊天记录吗？')) {
+                        return;
+                    }
+
+                    try {
+                        const response = await axios.delete(`/api/chat/history/${characterId}`);
+                        if (response.data.success) {
+                            this.showSuccess(response.data.message);
+                            await this.loadChatHistory();
+                        }
+                    } catch (error) {
+                        this.showError('清空聊天记录失败');
+                    }
+                },
+
+                loadHistoryMessage(result) {
+                    // 选择对应的角色并加载消息
+                    const character = this.characters.find(c => c.id === result.character_id);
+                    if (character) {
+                        this.selectedCharacter = character;
+                        this.messages = [result];
+                        this.showHistoryPanel = false;
+                    }
+                },
+
+                async toggleFavorite(character) {
+                    try {
+                        if (character.is_favorited) {
+                            await axios.delete(`/api/characters/${character.id}/favorite`);
+                            character.is_favorited = false;
+                            this.showSuccess('已取消收藏');
+                        } else {
+                            await axios.post(`/api/characters/${character.id}/favorite`);
+                            character.is_favorited = true;
+                            this.showSuccess('已添加到收藏');
+                        }
+                        
+                        // 更新收藏列表
+                        await this.loadFavoriteCharacters();
+                    } catch (error) {
+                        this.showError('操作失败，请重试');
+                    }
+                },
+
+                async loadFavoriteCharacters() {
+                    try {
+                        const response = await axios.get('/api/user/favorites');
+                        this.favoriteCharacters = response.data.favorites;
+                        
+                        // 更新角色列表中的收藏状态
+                        this.characters.forEach(character => {
+                            character.is_favorited = this.favoriteCharacters.some(fav => fav.id === character.id);
+                        });
+                    } catch (error) {
+                        console.error('加载收藏角色失败:', error);
+                    }
+                },
+
+                async loadUserSettings() {
+                    try {
+                        const response = await axios.get('/api/user/settings');
+                        const settings = response.data.settings;
+                        
+                        // 更新用户设置
+                        Object.keys(this.userSettings).forEach(key => {
+                            if (settings[key] !== undefined) {
+                                this.userSettings[key] = settings[key];
+                            }
+                        });
+                    } catch (error) {
+                        console.error('加载用户设置失败:', error);
+                    }
+                },
+
+                async saveSettings() {
+                    try {
+                        await axios.post('/api/user/settings', this.userSettings);
+                        this.showSuccess('设置已保存');
+                    } catch (error) {
+                        this.showError('保存设置失败');
+                    }
+                },
+
+                async exportChatHistory() {
+                    try {
+                        const response = await axios.get('/api/chat/history');
+                        const history = response.data;
+                        
+                        // 创建导出数据
+                        const exportData = {
+                            exportTime: new Date().toISOString(),
+                            user: this.currentUser.username,
+                            chatHistory: history
+                        };
+                        
+                        // 下载文件
+                        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `chat_history_${new Date().toISOString().split('T')[0]}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        
+                        this.showSuccess('聊天记录已导出');
+                    } catch (error) {
+                        this.showError('导出聊天记录失败');
+                    }
+                },
+
+                async clearAllHistory() {
+                    if (!confirm('确定要清空所有聊天记录吗？此操作不可恢复！')) {
+                        return;
+                    }
+
+                    try {
+                        // 清空所有角色的聊天记录
+                        for (const characterId in this.chatHistory) {
+                            await axios.delete(`/api/chat/history/${characterId}`);
+                        }
+                        
+                        this.chatHistory = {};
+                        this.messages = [];
+                        this.showSuccess('所有聊天记录已清空');
+                    } catch (error) {
+                        this.showError('清空聊天记录失败');
+                    }
+                },
+
+                getCharacterName(characterId) {
+                    const character = this.characters.find(c => c.id === characterId);
+                    return character ? character.name : characterId;
+                },
+
+                formatTime(timestamp) {
+                    const date = new Date(timestamp);
+                    return date.toLocaleString('zh-CN');
+                },
+
+                // 主题切换相关方法
+                applyTheme() {
+                    const theme = this.userSettings.theme;
+                    const body = document.body;
+                    
+                    if (theme === 'auto') {
+                        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                        body.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+                    } else {
+                        body.setAttribute('data-theme', theme);
+                    }
+                },
+
+                handleSystemThemeChange(e) {
+                    if (this.userSettings.theme === 'auto') {
+                        document.body.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+                    }
+                },
+
+                async saveSettings() {
+                    try {
+                        await axios.post('/api/user/settings', this.userSettings);
+                        this.applyTheme(); // 应用新主题
+                        this.showSuccess('设置已保存');
+                    } catch (error) {
+                        this.showError('保存设置失败');
+                    }
+                },
+
+                // 用户菜单相关方法
+                toggleUserMenu() {
+                    this.showUserMenu = !this.showUserMenu;
+                },
+
+                showProfile() {
+                    this.showUserMenu = false;
+                    this.showSettingsPanel = true;
+                },
+
+                toggleNotificationPanel() {
+                    this.showNotificationPanel = !this.showNotificationPanel;
+                    if (this.showNotificationPanel) {
+                        this.unreadCount = 0; // 标记为已读
+                    }
+                },
+
+                // 点击外部关闭菜单
+                handleClickOutside(event) {
+                    if (!event.target.closest('.user-menu')) {
+                        this.showUserMenu = false;
+                    }
+                    if (!event.target.closest('.notification-panel')) {
+                        this.showNotificationPanel = false;
+                    }
+                },
+
+                // 语音通话：播放base64音频
+                playAudio(base64Audio) {
+                    try {
+                        if (this.currentAudio) {
+                            this.currentAudio.pause();
+                            this.currentAudio = null;
+                        }
+                        const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
+                        this.currentAudio = audio;
+                        audio.play();
+                    } catch (e) {
+                        console.error('播放音频失败:', e);
+                    }
+                },
+
+                // 语音通话：开始/停止录音开关
+                async toggleRecording() {
+                    if (this.isRecording) {
+                        this.stopRecording();
+                    } else {
+                        await this.startRecording();
+                    }
+                },
+
+                // 语音通话：开始录音
+                async startRecording() {
+                    try {
+                        if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
+                            this.showError('未连接到会话，无法开始录音');
+                            return;
+                        }
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        this.audioChunks = [];
+                        this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                        this.mediaRecorder.ondataavailable = (e) => {
+                            if (e.data && e.data.size > 0) this.audioChunks.push(e.data);
+                        };
+                        this.mediaRecorder.onstop = async () => {
+                            const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                            const arrayBuffer = await blob.arrayBuffer();
+                            const base64Audio = await this.arrayBufferToBase64(arrayBuffer);
+                            // 发送到后端进行ASR -> LLM -> TTS
+                            try {
+                                this.websocket.send(JSON.stringify({ type: 'voice', audio: base64Audio }));
+                            } catch (err) {
+                                console.error('发送语音失败:', err);
+                                this.showError('发送语音失败');
+                            }
+                        };
+                        this.mediaRecorder.start();
+                        this.isRecording = true;
+                        this.isVoiceCalling = true;
+                    } catch (error) {
+                        console.error('开始录音失败:', error);
+                        this.showError('无法访问麦克风');
+                    }
+                },
+
+                // 语音通话：停止录音
+                stopRecording() {
+                    try {
+                        if (this.mediaRecorder && this.isRecording) {
+                            this.mediaRecorder.stop();
+                            this.mediaRecorder.stream.getTracks().forEach(t => t.stop());
+                        }
+                    } catch (_) {}
+                    this.isRecording = false;
+                },
+
+                // 工具：ArrayBuffer 转 base64
+                arrayBufferToBase64(buffer) {
+                    return new Promise((resolve) => {
+                        const blob = new Blob([buffer], { type: 'application/octet-stream' });
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const dataUrl = reader.result; // data:*/*;base64,XXXX
+                            const base64 = String(dataUrl).split(',')[1] || '';
+                            resolve(base64);
+                        };
+                        reader.readAsDataURL(blob);
+                    });
+                }
+            },
+            
+            async mounted() {
+                try {
+                    console.log('Vue应用已挂载');
+                    // 检查本地存储的登录状态
+                    this.checkAuthStatus();
+                    console.log('开始加载角色数据...');
+                    await this.loadCharacters();
+                    console.log('角色数据加载完成');
+                    await this.loadUserSettings();
+                    await this.loadFavoriteCharacters();
+                    
+                    // 应用主题
+                    this.applyTheme();
+                    
+                    // 监听系统主题变化
+                    if (window.matchMedia) {
+                        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', this.handleSystemThemeChange);
+                    }
+                    
+                    // 添加点击外部关闭菜单的事件监听
+                    document.addEventListener('click', this.handleClickOutside);
+                } catch (error) {
+                    console.error('Vue应用初始化错误:', error);
+                }
+            },
+            
+            beforeUnmount() {
+                if (this.websocket) {
+                    this.websocket.close();
+                }
+                // 移除事件监听器
+                document.removeEventListener('click', this.handleClickOutside);
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
