@@ -97,7 +97,7 @@ pip install -r requirements.txt
 3. **配置环境变量**
 创建 `.env` 文件：
 ```
-ALIBABA_CLOUD_API_KEY=sk-2796d36fef1048bd91b63f3c355d06dd
+ALIBABA_CLOUD_API_KEY=sk-xxxxxxxxxxxxxxxxxxxx
 ```
 
 4. **启动后端服务**
@@ -185,5 +185,5 @@ MIT License
 ## 联系方式
 
 如有问题或建议，请通过以下方式联系：
-- 邮箱：your-email@example.com
-- GitHub：your-github-username
+- 邮箱：2012997697@qq.com
+- GitHub：echo-c-c
