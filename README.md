@@ -78,36 +78,37 @@
 ## 安装和运行
 
 ### 环境要求
-- Python 3.8+
-- Node.js (可选，用于前端开发)
+- Python 3.10+
+- Windows 10/11（或其他能运行 Python 的系统）
 
-### 安装步骤
+### 安装步骤（已在仓库中提供自动启动脚本）
 
-1. **克隆项目**
+1. 克隆项目
 ```bash
-git clone <repository-url>
-cd ai-roleplay-chat
+git clone https://github.com/echo-c-c/-demo.git
+cd -demo
 ```
 
-2. **安装Python依赖**
+2. 安装依赖
 ```bash
 pip install -r requirements.txt
 ```
 
-3. **配置环境变量**
-创建 `.env` 文件：
+3. 配置环境变量（不要把真实密钥写进仓库）
+- 复制 `.env.example` 为 `.env`，并按需填写：
 ```
-ALIBABA_CLOUD_API_KEY=sk-2796d36fef1048bd91b63f3c355d06dd
+QINIU_BASE_URL=https://openai.qiniu.com/v1
+QINIU_TTS_KEY=sk-xxxx                  # 你的七牛云语音服务密钥
+JWT_SECRET=please-change-me            # 用于JWT签名
 ```
 
-4. **启动后端服务**
+4. 启动服务
 ```bash
-cd backend
-python main.py
+python run.py
 ```
 
-5. **访问应用**
-打开浏览器访问：`http://localhost:8000`
+5. 访问应用：
+打开浏览器 `http://localhost:8000`
 
 ## API接口
 
@@ -137,10 +138,10 @@ python main.py
 2. 根据提示输入相关参数
 3. 获得基于角色背景的专业回答
 
-### 语音功能
-1. 点击语音模式按钮
-2. 允许浏览器访问麦克风
-3. 开始语音对话（需要HTTPS环境）
+### 语音功能（ASR + TTS + WebSocket通话）
+1. 选择角色后，点击右下角的麦克风悬浮按钮开始录音
+2. 停止录音后，前端会将音频通过 WebSocket 发送至后端，后端完成 ASR → LLM → TTS 流程
+3. 前端自动播放 AI 语音回复，同时在消息区显示识别文本与回复文本
 
 ## 项目结构
 
@@ -161,18 +162,17 @@ ai-roleplay-chat/
 ## 开发计划
 
 ### 已完成功能
-- ✅ 基础角色系统
-- ✅ AI对话集成
-- ✅ 角色技能系统
-- ✅ 前端界面
-- ✅ 数据库设计
+- ✅ 基础角色系统、角色技能（含“魔法知识”等）
+- ✅ 阿里云百炼（通义千问3）对话集成
+- ✅ 用户注册/登录、JWT 鉴权
+- ✅ 聊天记录、收藏、用户设置、通知面板
+- ✅ 主题切换（亮/暗/自动）、整体UI重构
+- ✅ 语音识别（ASR）与语音合成（TTS）整合、语音通话
 
-### 待开发功能
-- 🔄 语音识别和TTS集成
-- 🔄 用户认证系统
-- 🔄 聊天记录管理
-- 🔄 角色评分系统
-- 🔄 多语言支持
+### 规划项
+- 🔄 更丰富的角色与技能
+- 🔄 更完善的消息搜索与导出
+- 🔄 评分与反馈体系
 
 ## 贡献指南
 
@@ -185,5 +185,5 @@ MIT License
 ## 联系方式
 
 如有问题或建议，请通过以下方式联系：
-- 邮箱：your-email@example.com
-- GitHub：your-github-username
+- 邮箱：2012997697
+- GitHub：echo-c-c
