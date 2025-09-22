@@ -85,8 +85,9 @@
 
 1. **克隆项目**
 ```bash
-git clone <repository-url>
-cd ai-roleplay-chat
+git clone https://github.com/echo-c-c/-demo.git
+cd -demo
+
 ```
 
 2. **安装Python依赖**
