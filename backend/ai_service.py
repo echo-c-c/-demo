@@ -6,7 +6,8 @@ import os
 
 class AIService:
     def __init__(self):
-        self.api_key = "sk-2796d36fef1048bd91b63f3c355d06dd"
+        # 从环境变量读取，避免将密钥硬编码进仓库
+        self.api_key = os.getenv("ALIBABA_CLOUD_API_KEY", "")
         self.base_url = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
         self.model = "qwen-max"
         

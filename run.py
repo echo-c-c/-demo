@@ -40,7 +40,7 @@ def create_env_file():
         print("📝 创建环境变量文件...")
         with open(env_file, "w", encoding="utf-8") as f:
             f.write("# AI角色扮演聊天系统环境变量\n")
-            f.write("ALIBABA_CLOUD_API_KEY=sk-2796d36fef1048bd91b63f3c355d06dd\n")
+            f.write("ALIBABA_CLOUD_API_KEY=sk-xxxx\n")
             f.write("DATABASE_URL=sqlite:///./chat_database.db\n")
             f.write("DEBUG=True\n")
         print("✅ 环境变量文件创建完成")
