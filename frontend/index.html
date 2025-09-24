@@ -2564,6 +2564,12 @@
                 },
 
                 async toggleFavorite(character) {
+                    // 检查用户是否已登录
+                    if (!this.isLoggedIn) {
+                        this.showError('请先登录后再收藏角色');
+                        return;
+                    }
+                    
                     try {
                         if (character.is_favorited) {
                             await axios.delete(`/api/characters/${character.id}/favorite`);
@@ -2578,11 +2584,21 @@
                         // 更新收藏列表
                         await this.loadFavoriteCharacters();
                     } catch (error) {
-                        this.showError('操作失败，请重试');
+                        if (error.response?.status === 401) {
+                            this.showError('登录已过期，请重新登录');
+                            this.logout();
+                        } else {
+                            this.showError('操作失败，请重试');
+                        }
                     }
                 },
 
                 async loadFavoriteCharacters() {
+                    if (!this.isLoggedIn) {
+                        this.favoriteCharacters = [];
+                        return;
+                    }
+                    
                     try {
                         const response = await axios.get('/api/user/favorites');
                         this.favoriteCharacters = response.data.favorites;
@@ -2597,6 +2613,10 @@
                 },
 
                 async loadUserSettings() {
+                    if (!this.isLoggedIn) {
+                        return;
+                    }
+                    
                     try {
                         const response = await axios.get('/api/user/settings');
                         const settings = response.data.settings;
@@ -2613,6 +2633,11 @@
                 },
 
                 async saveSettings() {
+                    if (!this.isLoggedIn) {
+                        this.showError('请先登录后再保存设置');
+                        return;
+                    }
+                    
                     try {
                         await axios.post('/api/user/settings', this.userSettings);
                         this.showSuccess('设置已保存');
