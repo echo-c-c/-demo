@@ -1,5 +1,7 @@
 ```
 
+```
+
 # AI角色扮演聊天系统
 
 一个基于AI的角色扮演聊天网站，可以与历史人物、文学角色进行对话。使用FastAPI + Vue3开发，集成了阿里云百炼和七牛云语音服务。
@@ -30,44 +32,23 @@
 ## 可视化概览
 
 ```mermaid
-pie title 用户构成（预期）
-  "历史兴趣用户" : 35
-  "写作者/创作者" : 25
-  "哲学/思辨用户" : 20
-  "技术爱好者" : 20
-```
-
-```mermaid
-gantt
-  title 功能开发甘特图（里程碑）
-  dateFormat  YYYY-MM-DD
-  section P0 核心功能
-  角色对话系统           :done,    des1, 2025-09-01,2025-09-07
-  用户认证与资料          :done,    des2, 2025-09-03,2025-09-10
-  聊天记录与收藏          :done,    des3, 2025-09-06,2025-09-12
-  section P1 重要功能
-  语音交互（ASR/TTS）     :active,  des4, 2025-09-10,2025-09-18
-  WebSocket实时通信        :done,    des5, 2025-09-08,2025-09-13
-  主题切换（亮/暗）        :done,    des6, 2025-09-09,2025-09-11
-  section P2 增强功能
-  评分与导出              :        des7, 2025-09-18,2025-09-25
-  更多角色与移动端优化     :        des8, 2025-09-22,2025-09-30
-```
-
-```mermaid
 flowchart LR
-  A[前端 Vue3] -->|Axios/WS| B[后端 FastAPI]
-  B --> C[AIService (通义千问3-Max)]
-  B --> D[VoiceService (七牛云 ASR/TTS)]
-  B --> E[(SQLite 数据库)]
-  subgraph 前端
-    A
+  subgraph Frontend [前端 Vue3]
+    FE[Vue3 应用]
   end
-  subgraph 后端
-    B --> C
-    B --> D
-    B --> E
+
+  subgraph Backend [后端 FastAPI]
+    BE[FastAPI 应用]
+    AI[AIService (通义千问3-Max)]
+    VS[VoiceService (七牛云 ASR/TTS)]
+    DB[(SQLite 数据库)]
   end
+
+  FE -- Axios/HTTP --> BE
+  FE -- WebSocket --> BE
+  BE -- Prompt/上下文 --> AI
+  BE -- ASR/TTS --> VS
+  BE <---> DB
 ```
 
 ```mermaid
@@ -78,19 +59,41 @@ sequenceDiagram
   participant WS as WebSocket
   participant BE as 后端(FastAPI)
   participant LLM as 通义千问3-Max
-  participant V as 七牛语音
+  participant V as 七牛语音(ASR/TTS)
 
-  U->>FE: 点击麦克风开始录音
-  FE->>WS: 发送音频片段
-  WS->>BE: 流式音频
-  BE->>V: ASR 识别
-  V-->>BE: 文本识别结果
-  BE->>LLM: 提交角色上下文+用户文本
+  U->>FE: 输入/录音
+  FE->>WS: 发送文本/音频
+  WS->>BE: 推送消息/音频片段
+  alt 语音输入
+    BE->>V: ASR 语音识别
+    V-->>BE: 识别文本
+  end
+  BE->>LLM: 角色上下文 + 用户消息
   LLM-->>BE: 生成回复文本
   BE->>V: TTS 合成
   V-->>BE: 音频流
-  BE-->>WS: 文本+音频返回
-  WS-->>FE: 前端播放音频并渲染消息
+  BE-->>WS: 文本 + 音频回复
+  WS-->>FE: 播放音频并渲染消息
+```
+
+```mermaid
+gantt
+  title 功能开发里程碑（简版）
+  dateFormat  YYYY-MM-DD
+  section P0 核心功能
+  角色对话/认证/记录 :done,    p0a, 2025-09-01,2025-09-12
+  section P1 重要功能
+  语音交互/主题/WS   :active,  p1a, 2025-09-10,2025-09-18
+  section P2 增强功能
+  评分/导出/移动端   :        p2a, 2025-09-18,2025-09-30
+```
+
+```mermaid
+pie title 预期用户构成
+  "历史兴趣用户" : 35
+  "写作者/创作者" : 25
+  "哲学/思辨用户" : 20
+  "技术爱好者"   : 20
 ```
 
 ## 功能规划
