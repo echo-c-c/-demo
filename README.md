@@ -79,12 +79,19 @@ sequenceDiagram
 ```mermaid
 gantt
   title 功能开发里程碑
+  dateFormat  YYYY-MM-DD
+  axisFormat  %m/%d
+  todayMarker stroke-width:2px
+
   section P0 核心功能
-  角色对话认证记录 :done
+  角色对话认证记录 :done,    p0a, 2025-09-01, 5d
+
   section P1 重要功能
-  语音交互主题WS :done
+  语音交互主题WS         :done,    p1a, after p0a, 4d
+
   section P2 增强功能
-  评分导出移动端 :active
+  评分导出移动端         :active,  p2a, after p1a, 7d
+
 ```
 
 ```mermaid
