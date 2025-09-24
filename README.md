@@ -77,20 +77,15 @@ sequenceDiagram
 ```
 
 ```mermaid
-gantt
-  title 功能开发里程碑
-  dateFormat  YYYY-MM-DD
-  axisFormat  %m/%d
-  todayMarker stroke-width:2px
-
+timeline
+  title 功能开发里程碑（无日期）
   section P0 核心功能
-  角色对话认证记录 :done,    p0a, 2025-09-01, 5d
-
+    角色对话认证记录 : 完成
   section P1 重要功能
-  语音交互主题WS         :done,    p1a, after p0a, 4d
-
+    语音交互主题WS : 完成
   section P2 增强功能
-  评分导出移动端         :active,  p2a, after p1a, 7d
+    评分导出移动端 : 进行中
+
 
 ```
 
