@@ -21,3 +21,7 @@ Thumbs.db
 # Local media
 *.mp3
 *.wav
+
+# Databases
+*.db
+backend/chat_database.db

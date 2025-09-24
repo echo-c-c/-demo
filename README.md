@@ -87,6 +87,10 @@
 ```bash
 git clone https://github.com/echo-c-c/-demo.git
 cd -demo
+<<<<<<< HEAD
+=======
+
+>>>>>>> 668a136909e93d988cea1dd2240b4d0e0fd73803
 ```
 
 2. 安装依赖
@@ -97,9 +101,13 @@ pip install -r requirements.txt
 3. 配置环境变量（不要把真实密钥写进仓库）
 - 复制 `.env.example` 为 `.env`，并按需填写：
 ```
+<<<<<<< HEAD
 QINIU_BASE_URL=https://openai.qiniu.com/v1
 QINIU_TTS_KEY=sk-xxxx                  # 你的七牛云语音服务密钥
 JWT_SECRET=please-change-me            # 用于JWT签名
+=======
+ALIBABA_CLOUD_API_KEY=sk-xxxxxxxxxxxxxxxxxxxx
+>>>>>>> 668a136909e93d988cea1dd2240b4d0e0fd73803
 ```
 
 4. 启动服务
@@ -185,5 +193,9 @@ MIT License
 ## 联系方式
 
 如有问题或建议，请通过以下方式联系：
+<<<<<<< HEAD
 - 邮箱：2012997697
+=======
+- 邮箱：2012997697@qq.com
+>>>>>>> 668a136909e93d988cea1dd2240b4d0e0fd73803
 - GitHub：echo-c-c
