@@ -80,11 +80,11 @@ sequenceDiagram
 gantt
   title 功能开发里程碑
   section P0 核心功能
-  角色对话/认证/记录 :done
+  角色对话认证记录 :done
   section P1 重要功能
-  语音交互/主题/WS   :done
+  语音交互主题WS :done
   section P2 增强功能
-  评分/导出/移动端   :active
+  评分导出移动端 :active
 ```
 
 ```mermaid
