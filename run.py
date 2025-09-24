@@ -73,7 +73,16 @@ def check_and_release_port(port=8000):
     # 使用Windows命令检查端口
     try:
         result = subprocess.run(['netstat', '-ano'], capture_output=True, text=True)
-        if f':{port}' in result.stdout and 'LISTENING' in result.stdout:
+        lines = result.stdout.split('\n')
+        
+        # 检查是否有进程在监听该端口
+        port_in_use = False
+        for line in lines:
+            if f':{port}' in line and 'LISTENING' in line:
+                port_in_use = True
+                break
+        
+        if port_in_use:
             print(f"⚠️  端口 {port} 被占用，正在尝试释放...")
             if kill_process_on_port(port):
                 print(f"✅ 端口 {port} 已释放")
@@ -127,37 +136,26 @@ def start_server(port=8000):
     if backend_dir.exists():
         os.chdir(backend_dir)
     
-    # 尝试多个端口 - 优先使用8080端口
-    ports_to_try = [8080, 8000, 8001, 8002, 8003, 8004, 8005]
-    
-    for try_port in ports_to_try:
-        print(f"🔄 尝试启动在端口 {try_port}...")
-        try:
-            # 方法1：使用subprocess启动
-            subprocess.run([
-                sys.executable, "-m", "uvicorn", 
-                "main:app", 
-                "--host", "127.0.0.1", 
-                "--port", str(try_port), 
-                "--reload"
-            ])
-            break  # 如果成功启动，跳出循环
-        except KeyboardInterrupt:
-            print("\n👋 服务器已停止")
-            break
-        except Exception as e:
-            print(f"❌ 端口 {try_port} 启动失败: {e}")
-            if try_port == ports_to_try[-1]:
-                print("❌ 所有端口都无法启动，请检查系统权限或防火墙设置")
-                print("💡 建议：")
-                print("   1. 以管理员身份运行命令提示符")
-                print("   2. 检查Windows防火墙设置")
-                print("   3. 尝试使用其他端口范围")
-                print("   4. 或者手动运行: cd backend && python -m uvicorn main:app --host 127.0.0.1 --port 8000")
-                sys.exit(1)
-            else:
-                print(f"🔄 尝试下一个端口...")
-                continue
+    try:
+        # 启动FastAPI服务器 - 使用确定的端口
+        print(f"🔄 启动在端口 {port}...")
+        subprocess.run([
+            sys.executable, "-m", "uvicorn", 
+            "main:app", 
+            "--host", "127.0.0.1", 
+            "--port", str(port), 
+            "--reload"
+        ])
+    except KeyboardInterrupt:
+        print("\n👋 服务器已停止")
+    except Exception as e:
+        print(f"❌ 端口 {port} 启动失败: {e}")
+        print("💡 建议：")
+        print("   1. 以管理员身份运行命令提示符")
+        print("   2. 检查Windows防火墙设置")
+        print("   3. 尝试使用其他端口范围")
+        print(f"   4. 或者手动运行: cd backend && python -m uvicorn main:app --host 127.0.0.1 --port {port}")
+        sys.exit(1)
 
 def open_browser(port=8000):
     """打开浏览器"""
@@ -190,10 +188,13 @@ def main():
     # 检查端口并确定使用的端口 - 优先使用8080
     port = 8080
     if not check_and_release_port(port):
+        # 如果8080端口无法使用，尝试其他端口
         port = find_available_port(8000, 8010)
         if port is None:
             print("❌ 无法找到可用端口，请手动关闭占用端口的程序")
             sys.exit(1)
+    
+    print(f"🎯 最终使用端口: {port}")
     
     # 打开浏览器
     open_browser(port)
