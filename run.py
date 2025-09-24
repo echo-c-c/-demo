@@ -127,17 +127,17 @@ def start_server(port=8000):
     if backend_dir.exists():
         os.chdir(backend_dir)
     
-    # 尝试多个端口
-    ports_to_try = [port, 8001, 8002, 8003, 8004, 8005]
+    # 尝试多个端口 - 优先使用8080端口
+    ports_to_try = [8080, 8000, 8001, 8002, 8003, 8004, 8005]
     
     for try_port in ports_to_try:
         print(f"🔄 尝试启动在端口 {try_port}...")
         try:
-            # 启动FastAPI服务器
+            # 方法1：使用subprocess启动
             subprocess.run([
                 sys.executable, "-m", "uvicorn", 
                 "main:app", 
-                "--host", "0.0.0.0", 
+                "--host", "127.0.0.1", 
                 "--port", str(try_port), 
                 "--reload"
             ])
@@ -149,6 +149,11 @@ def start_server(port=8000):
             print(f"❌ 端口 {try_port} 启动失败: {e}")
             if try_port == ports_to_try[-1]:
                 print("❌ 所有端口都无法启动，请检查系统权限或防火墙设置")
+                print("💡 建议：")
+                print("   1. 以管理员身份运行命令提示符")
+                print("   2. 检查Windows防火墙设置")
+                print("   3. 尝试使用其他端口范围")
+                print("   4. 或者手动运行: cd backend && python -m uvicorn main:app --host 127.0.0.1 --port 8000")
                 sys.exit(1)
             else:
                 print(f"🔄 尝试下一个端口...")
@@ -182,10 +187,10 @@ def main():
     # 创建环境变量文件
     create_env_file()
     
-    # 检查端口并确定使用的端口
-    port = 8000
+    # 检查端口并确定使用的端口 - 优先使用8080
+    port = 8080
     if not check_and_release_port(port):
-        port = find_available_port(8001, 8010)
+        port = find_available_port(8000, 8010)
         if port is None:
             print("❌ 无法找到可用端口，请手动关闭占用端口的程序")
             sys.exit(1)
