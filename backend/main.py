@@ -13,6 +13,10 @@ from datetime import datetime
 import base64
 import io
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv('../.env')
 
 from ai_service import AIService
 from voice_service import VoiceService

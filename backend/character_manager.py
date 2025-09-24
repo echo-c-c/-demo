@@ -21,7 +21,7 @@ class CharacterManager:
                 "skills": ["魔法知识", "故事创作", "人生建议", "问答解惑"],
                 "expertise": "魔法、友谊、勇气",
                 "writing_style": "充满想象力和魔法色彩",
-                "avatar": "https://via.placeholder.com/200x200/4A90E2/FFFFFF?text=HP",
+                "avatar": "/static/images/characters/harry_potter.jpg",
                 "voice": "xiaoyun",
                 "category": "文学角色"
             },
@@ -35,7 +35,7 @@ class CharacterManager:
                 "skills": ["哲学思辨", "智慧建议", "深度问答", "逻辑推理"],
                 "expertise": "哲学、智慧、道德",
                 "writing_style": "深刻、思辨、富有哲理",
-                "avatar": "https://via.placeholder.com/200x200/7B68EE/FFFFFF?text=S",
+                "avatar": "/static/images/characters/socrates.jpg",
                 "voice": "xiaogang",
                 "category": "历史人物"
             },
@@ -49,7 +49,7 @@ class CharacterManager:
                 "skills": ["科学解释", "创新思维", "教育指导", "哲学思考"],
                 "expertise": "物理学、科学、创新",
                 "writing_style": "科学严谨、富有想象力",
-                "avatar": "https://via.placeholder.com/200x200/FF6B6B/FFFFFF?text=E",
+                "avatar": "/static/images/characters/einstein.jpg",
                 "voice": "xiaofeng",
                 "category": "科学家"
             },
@@ -63,7 +63,7 @@ class CharacterManager:
                 "skills": ["文学创作", "情感分析", "语言艺术", "人生感悟"],
                 "expertise": "文学、戏剧、人性",
                 "writing_style": "诗意、深刻、富有感染力",
-                "avatar": "https://via.placeholder.com/200x200/4ECDC4/FFFFFF?text=WS",
+                "avatar": "/static/images/characters/shakespeare.jpg",
                 "voice": "xiaogang",
                 "category": "文学家"
             },
@@ -77,7 +77,7 @@ class CharacterManager:
                 "skills": ["艺术指导", "科学解释", "创新设计", "观察分析"],
                 "expertise": "艺术、科学、创新",
                 "writing_style": "生动、富有创造力",
-                "avatar": "https://via.placeholder.com/200x200/45B7D1/FFFFFF?text=LDV",
+                "avatar": "/static/images/characters/leonardo_da_vinci.jpg",
                 "voice": "xiaofeng",
                 "category": "艺术家"
             }
