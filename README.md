@@ -39,15 +39,15 @@ flowchart LR
 
   subgraph Backend [后端 FastAPI]
     BE[FastAPI 应用]
-    AI[AIService (通义千问3-Max)]
-    VS[VoiceService (七牛云 ASR/TTS)]
+    AI[AIService 通义千问 3-Max]
+    VS[VoiceService 七牛云 ASR & TTS]
     DB[(SQLite 数据库)]
   end
 
-  FE -- Axios/HTTP --> BE
+  FE -- Axios HTTP --> BE
   FE -- WebSocket --> BE
-  BE -- Prompt/上下文 --> AI
-  BE -- ASR/TTS --> VS
+  BE -- Prompt 与 上下文 --> AI
+  BE -- ASR 与 TTS --> VS
   BE <---> DB
 ```
 
