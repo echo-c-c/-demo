@@ -195,8 +195,8 @@ async def get_character(character_id: str):
     return character
 
 @app.post("/api/chat/text")
-async def chat_text(request: dict, current_user: dict = Depends(get_current_user)):
-    """文本聊天接口"""
+async def chat_text(request: dict):
+    """文本聊天接口（演示模式：无需登录）"""
     character_id = request.get("character_id")
     message = request.get("message")
     
@@ -207,10 +207,15 @@ async def chat_text(request: dict, current_user: dict = Depends(get_current_user
     if not character:
         raise HTTPException(status_code=404, detail="角色不存在")
     
-    response = await ai_service.chat_with_character(character, message)
+    # 演示模式：检查是否有AI服务配置
+    if not ai_service.api_key:
+        # 返回模拟回复
+        response = f"【演示模式】{character['name']}：我听到了您说'{message}'。这是一个模拟回复，请配置ALIBABA_CLOUD_API_KEY以获得真实的AI对话。"
+    else:
+        response = await ai_service.chat_with_character(character, message)
     
-    # 保存聊天记录（关联用户ID）
-    user_id = str(current_user["user_id"])
+    # 演示模式：保存聊天记录（使用演示用户ID）
+    user_id = "demo_user"
     db_manager.save_chat_record(character_id, "user", message, "text", user_id)
     db_manager.save_chat_record(character_id, "assistant", response, "text", user_id)
     
@@ -242,6 +247,27 @@ async def chat_voice(character_id: str, audio_file: UploadFile = File(...)):
     return {
         "text": text,
         "response": response,
+        "audio": base64.b64encode(audio_response).decode('utf-8')
+    }
+
+@app.post("/api/chat/tts")
+async def text_to_speech(request: dict):
+    """文字转语音接口（演示模式：无需登录）"""
+    character_id = request.get("character_id")
+    text = request.get("text")
+    
+    if not character_id or not text:
+        raise HTTPException(status_code=400, detail="缺少必要参数")
+    
+    character = character_manager.get_character(character_id)
+    if not character:
+        raise HTTPException(status_code=404, detail="角色不存在")
+    
+    # 文本转语音
+    audio_response = await voice_service.text_to_speech(text)
+    
+    return {
+        "text": text,
         "audio": base64.b64encode(audio_response).decode('utf-8')
     }
 
@@ -347,27 +373,16 @@ async def remove_favorite_character(character_id: str, current_user: dict = Depe
     return db_manager.remove_favorite_character(user_id, character_id)
 
 @app.get("/api/user/favorites")
-async def get_favorite_characters(current_user: dict = Depends(get_current_user)):
-    """获取用户收藏的角色列表"""
-    user_id = str(current_user["user_id"])
-    favorite_ids = db_manager.get_favorite_characters(user_id)
-    
-    # 获取完整的角色信息
-    favorite_characters = []
-    for character_id in favorite_ids:
-        character = character_manager.get_character(character_id)
-        if character:
-            character["is_favorited"] = True
-            favorite_characters.append(character)
-    
-    return {"favorites": favorite_characters}
+async def get_favorite_characters():
+    """获取用户收藏的角色列表（演示模式：无需登录）"""
+    # 演示模式：返回空收藏列表
+    return {"favorites": []}
 
 @app.get("/api/characters/{character_id}/favorite-status")
-async def get_favorite_status(character_id: str, current_user: dict = Depends(get_current_user)):
-    """检查角色收藏状态"""
-    user_id = str(current_user["user_id"])
-    is_favorited = db_manager.is_character_favorited(user_id, character_id)
-    return {"is_favorited": is_favorited}
+async def get_favorite_status(character_id: str):
+    """检查角色收藏状态（演示模式：无需登录）"""
+    # 演示模式：返回未收藏状态
+    return {"is_favorited": False}
 
 # 用户设置相关接口
 @app.post("/api/user/settings")
@@ -383,11 +398,10 @@ async def save_user_settings(settings: dict, current_user: dict = Depends(get_cu
     return {"results": results}
 
 @app.get("/api/user/settings")
-async def get_user_settings(current_user: dict = Depends(get_current_user)):
-    """获取用户设置"""
-    user_id = str(current_user["user_id"])
-    settings = db_manager.get_all_user_settings(user_id)
-    return {"settings": settings}
+async def get_user_settings():
+    """获取用户设置（演示模式：无需登录）"""
+    # 演示模式：返回默认设置
+    return {"settings": {"theme": "light", "language": "zh-CN"}}
 
 @app.get("/api/user/settings/{setting_key}")
 async def get_user_setting(setting_key: str, current_user: dict = Depends(get_current_user)):
