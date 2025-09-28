@@ -16,7 +16,11 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 
 # 加载环境变量
-load_dotenv('../.env')
+load_dotenv('../test_env.env')
+
+# 确保环境变量正确加载
+from load_env import load_environment_variables
+load_environment_variables('../test_env.env')
 
 from ai_service import AIService
 from voice_service import VoiceService
@@ -209,8 +213,15 @@ async def chat_text(request: dict):
     
     # 演示模式：检查是否有AI服务配置
     if not ai_service.api_key:
-        # 返回模拟回复
-        response = f"【演示模式】{character['name']}：我听到了您说'{message}'。这是一个模拟回复，请配置ALIBABA_CLOUD_API_KEY以获得真实的AI对话。"
+        # 返回更真实的模拟回复
+        character_responses = {
+            "einstein": f"你好！我是爱因斯坦。你刚才说'{message}'，这让我想起了相对论中的一个有趣概念。在时空的弯曲中，每一个想法都可能改变宇宙的轨迹。",
+            "harry_potter": f"你好！我是哈利·波特。你提到'{message}'，这让我想起了在霍格沃茨的时光。魔法世界总是充满了惊喜和冒险。",
+            "leonardo_da_vinci": f"你好！我是达·芬奇。关于'{message}'，这让我想起了艺术与科学的完美结合。每一个创意都是对美的追求。",
+            "shakespeare": f"你好！我是莎士比亚。'你说'{message}'，这让我想起了戏剧中的经典台词。'生存还是毁灭，这是一个问题。'",
+            "socrates": f"你好！我是苏格拉底。你提到'{message}'，这让我想起了哲学的本质。'我知道我一无所知'，但正是这种无知让我们不断探索真理。"
+        }
+        response = character_responses.get(character_id, f"你好！我是{character['name']}。关于'{message}'，这是一个很有趣的话题。")
     else:
         response = await ai_service.chat_with_character(character, message)
     
@@ -252,24 +263,24 @@ async def chat_voice(character_id: str, audio_file: UploadFile = File(...)):
 
 @app.post("/api/chat/tts")
 async def text_to_speech(request: dict):
-    """文字转语音接口（演示模式：无需登录）"""
-    character_id = request.get("character_id")
+    """文字转语音接口"""
     text = request.get("text")
+    character_id = request.get("character_id")
     
-    if not character_id or not text:
-        raise HTTPException(status_code=400, detail="缺少必要参数")
+    if not text:
+        raise HTTPException(status_code=400, detail="缺少文本内容")
     
-    character = character_manager.get_character(character_id)
-    if not character:
-        raise HTTPException(status_code=404, detail="角色不存在")
-    
-    # 文本转语音
-    audio_response = await voice_service.text_to_speech(text)
-    
-    return {
-        "text": text,
-        "audio": base64.b64encode(audio_response).decode('utf-8')
-    }
+    try:
+        # 使用七牛云TTS服务
+        audio_data = await voice_service.text_to_speech(text)
+        
+        return {
+            "success": True,
+            "audio": base64.b64encode(audio_data).decode('utf-8')
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"语音合成失败: {str(e)}")
+
 
 @app.websocket("/ws/{character_id}")
 async def websocket_endpoint(websocket: WebSocket, character_id: str):

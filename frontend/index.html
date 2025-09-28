@@ -1466,6 +1466,11 @@
             border: none;
         }
         
+        .voice-controls .btn-warning {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            border: none;
+        }
+        
         .voice-controls .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
@@ -1488,38 +1493,6 @@
             100% { opacity: 1; }
         }
         
-        /* TTS播放控制按钮样式 */
-        .btn-danger {
-            background: linear-gradient(135deg, #f44336, #da190b);
-            border: none;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: linear-gradient(135deg, #da190b, #b71c1c);
-        }
-        
-        .btn-danger:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        /* TTS播放状态指示 */
-        .tts-playing {
-            position: relative;
-        }
-        
-        .tts-playing::after {
-            content: '';
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            width: 8px;
-            height: 8px;
-            background-color: #4CAF50;
-            border-radius: 50%;
-            animation: pulse 1s infinite;
-        }
     </style>
 </head>
 <body>
@@ -1726,24 +1699,6 @@
                         >
                             发送
                         </button>
-                        <button 
-                            v-if="!isTTSPlaying"
-                            class="btn btn-secondary"
-                            @click="textToSpeech"
-                            :disabled="isLoading || !hasAssistantMessage"
-                            title="将AI回复转换为语音"
-                        >
-                            🔊 TTS
-                        </button>
-                        <button 
-                            v-else
-                            class="btn btn-danger"
-                            @click="stopTTSAudio"
-                            :disabled="isLoading"
-                            title="停止语音播放"
-                        >
-                            ⏹️ 停止播放
-                        </button>
                         <!-- 语音模式按钮组 -->
                         <div v-if="isVoiceMode" class="voice-controls">
                             <button 
@@ -1759,6 +1714,20 @@
                                 :disabled="isLoading || !isRecording"
                             >
                                 ⏹️ 结束录音
+                            </button>
+                            <button 
+                                class="btn btn-warning"
+                                @click="toggleAudioPlayback"
+                                :disabled="messages.length === 0"
+                            >
+                                {{ isPlayingAudio ? '⏹️ 停止播放' : '▶️ 播放最新回复' }}
+                            </button>
+                            <button 
+                                class="btn btn-secondary"
+                                @click="toggleVoiceMode"
+                                :disabled="isLoading"
+                            >
+                                📝 切换到文本模式
                             </button>
                         </div>
                         <button 
@@ -2015,13 +1984,11 @@
                         // 语音通话相关
                         isVoiceCalling: false,
                         isRecording: false,
+                        isPlayingAudio: false,
                         mediaRecorder: null,
                         audioChunks: [],
                         currentAudio: null,
                         
-                        // TTS播放相关
-                        isTTSPlaying: false,
-                        currentTTSUtterance: null,
 
                         // 新功能相关
                         showHistoryPanel: false,
@@ -2454,10 +2421,10 @@
                 
                 toggleVoiceMode() {
                     this.isVoiceMode = !this.isVoiceMode;
-                    if (this.isVoiceMode) {
-                        this.startVoiceRecording();
-                    } else {
+                    if (!this.isVoiceMode) {
+                        // 切换到文本模式时，停止录音和播放
                         this.stopVoiceRecording();
+                        this.stopAudioPlayback();
                     }
                 },
                 
@@ -2478,10 +2445,88 @@
                 
                 playAudio(audioData) {
                     try {
-                        const audio = new Audio(`data:audio/wav;base64,${audioData}`);
+                        if (this.currentAudio) {
+                            this.currentAudio.pause();
+                        }
+                        const audio = new Audio(`data:audio/mp3;base64,${audioData}`);
+                        this.currentAudio = audio;
+                        this.isPlayingAudio = true;
+                        
+                        audio.onended = () => {
+                            this.isPlayingAudio = false;
+                        };
+                        
+                        audio.onerror = () => {
+                            this.isPlayingAudio = false;
+                            console.error('音频播放出错');
+                        };
+                        
                         audio.play();
                     } catch (error) {
                         console.error('播放音频失败:', error);
+                        this.isPlayingAudio = false;
+                    }
+                },
+                
+                stopAudioPlayback() {
+                    if (this.currentAudio) {
+                        this.currentAudio.pause();
+                        this.currentAudio = null;  // 终止播放，清空音频对象
+                        this.isPlayingAudio = false;
+                    }
+                },
+                
+                toggleAudioPlayback() {
+                    if (this.isPlayingAudio && this.currentAudio) {
+                        // 如果正在播放，则停止
+                        this.stopAudioPlayback();
+                    } else {
+                        // 播放最新的AI回复
+                        this.playLatestResponse();
+                    }
+                },
+                
+                resumeAudioPlayback() {
+                    if (this.currentAudio) {
+                        this.currentAudio.play();
+                        this.isPlayingAudio = true;
+                    }
+                },
+                
+                async playLatestResponse() {
+                    // 获取最新的AI回复
+                    const latestMessage = this.messages.findLast(msg => msg.role === 'assistant');
+                    if (!latestMessage) {
+                        this.showError('没有可播放的回复');
+                        return;
+                    }
+                    
+                    try {
+                        // 调用后端TTS服务
+                        const response = await fetch('/api/chat/tts', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                text: latestMessage.content,
+                                character_id: this.selectedCharacter.id
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.audio) {
+                                this.playAudio(data.audio);
+                            } else {
+                                this.showError('无法生成语音');
+                            }
+                        } else {
+                            this.showError('语音生成失败');
+                        }
+                    } catch (error) {
+                        console.error('播放最新回复失败:', error);
+                        this.showError('播放失败，请重试');
                     }
                 },
                 
@@ -2898,13 +2943,24 @@
                     try {
                         if (this.currentAudio) {
                             this.currentAudio.pause();
-                            this.currentAudio = null;
                         }
                         const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
                         this.currentAudio = audio;
+                        this.isPlayingAudio = true;
+                        
+                        audio.onended = () => {
+                            this.isPlayingAudio = false;
+                        };
+                        
+                        audio.onerror = () => {
+                            this.isPlayingAudio = false;
+                            console.error('音频播放出错');
+                        };
+                        
                         audio.play();
                     } catch (e) {
                         console.error('播放音频失败:', e);
+                        this.isPlayingAudio = false;
                     }
                 },
 
@@ -3053,120 +3109,8 @@
                     this.handleWebSocketMessage(mockVoiceResponse);
                 },
 
-                // TTS专用音频播放函数 - 使用Web Speech API
-                playTTSAudio(base64Audio, textContent) {
-                    try {
-                        // 检查浏览器是否支持Web Speech API
-                        if ('speechSynthesis' in window) {
-                            // 停止当前播放
-                            speechSynthesis.cancel();
-                            
-                            // 使用Web Speech API播放AI回复内容
-                            const utterance = new SpeechSynthesisUtterance(textContent || '这是测试模式的语音播放');
-                            utterance.lang = 'zh-CN';
-                            utterance.rate = 0.8;
-                            utterance.pitch = 1.0;
-                            
-                            // 保存当前播放的utterance，用于停止控制
-                            this.currentTTSUtterance = utterance;
-                            
-                            utterance.onstart = () => {
-                                console.log('TTS语音播放开始');
-                                this.isTTSPlaying = true;
-                                this.showInfo('语音播放中，点击停止按钮可随时停止');
-                            };
-                            
-                            utterance.onend = () => {
-                                console.log('TTS语音播放完成');
-                                this.isTTSPlaying = false;
-                                this.currentTTSUtterance = null;
-                                this.showSuccess('语音播放完成');
-                            };
-                            
-                            utterance.onerror = (error) => {
-                                console.error('TTS语音播放失败:', error);
-                                this.isTTSPlaying = false;
-                                this.currentTTSUtterance = null;
-                                this.showError('语音播放失败，请检查浏览器音频设置');
-                            };
-                            
-                            utterance.onpause = () => {
-                                console.log('TTS语音播放暂停');
-                                this.isTTSPlaying = false;
-                            };
-                            
-                            utterance.onresume = () => {
-                                console.log('TTS语音播放恢复');
-                                this.isTTSPlaying = true;
-                            };
-                            
-                            speechSynthesis.speak(utterance);
-                        } else {
-                            // 如果不支持Web Speech API，显示提示信息
-                            this.showInfo('浏览器不支持语音播放，但TTS功能已正常工作');
-                            console.log('TTS功能正常，但浏览器不支持语音播放');
-                        }
-                    } catch (e) {
-                        console.error('TTS音频播放出错:', e);
-                        this.showError('音频播放出错');
-                    }
-                },
 
-                // 停止TTS播放
-                stopTTSAudio() {
-                    try {
-                        if ('speechSynthesis' in window) {
-                            speechSynthesis.cancel();
-                            this.isTTSPlaying = false;
-                            this.currentTTSUtterance = null;
-                            this.showInfo('语音播放已停止');
-                        }
-                    } catch (e) {
-                        console.error('停止TTS播放出错:', e);
-                    }
-                },
 
-                // 文字转语音功能 - 转换最后一条AI回复
-                async textToSpeech() {
-                    if (!this.selectedCharacter) {
-                        this.showError('请先选择一个角色');
-                        return;
-                    }
-
-                    // 找到最后一条AI回复
-                    const lastMessage = this.messages.slice().reverse().find(msg => msg.role === 'assistant');
-                    if (!lastMessage) {
-                        this.showError('没有找到AI回复，请先发送消息');
-                        return;
-                    }
-
-                    try {
-                        this.isLoading = true;
-                        this.showInfo('正在转换AI回复为语音...');
-
-                        // 发送TTS请求到后端
-                        const response = await axios.post('/api/chat/tts', {
-                            character_id: this.selectedCharacter.id,
-                            text: lastMessage.content
-                        }, {
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        });
-
-                        if (response.data.audio) {
-                            // 播放返回的音频（使用Web Speech API播放AI回复内容）
-                            this.playTTSAudio(response.data.audio, lastMessage.content);
-                        } else {
-                            this.showError('语音转换失败');
-                        }
-                    } catch (error) {
-                        console.error('TTS错误:', error);
-                        this.showError('语音转换失败，请重试');
-                    } finally {
-                        this.isLoading = false;
-                    }
-                }
             },
             
             async mounted() {
